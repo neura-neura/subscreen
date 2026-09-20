@@ -1,0 +1,59 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Subscreen",
+  "version": "0.3.0",
+  "identifier": "com.neura.subscreen",
+  "build": {
+    "frontendDist": "../dist",
+    "devUrl": "http://127.0.0.1:1420",
+    "beforeDevCommand": "npm run dev",
+    "beforeBuildCommand": "npm run build"
+  },
+  "app": {
+    "windows": [
+      {
+        "title": "Subscreen",
+        "width": 1500,
+        "height": 940,
+        "minWidth": 980,
+        "minHeight": 640,
+        "resizable": true,
+        "transparent": true
+      }
+    ],
+    "security": {
+      "assetProtocol": {
+        "enable": true,
+        "scope": [
+          "**"
+        ]
+      },
+      "csp": null
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": [
+      "nsis"
+    ],
+    "icon": [
+      "icons/icon.ico"
+    ],
+    "resources": [
+      "lib/**/*",
+      "resources/**/*"
+    ],
+    "createUpdaterArtifacts": true
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDExRkY4NTVGNjA4NUQ5QjUKUldTMTJZVmdYNFgvRVhkTWFQZXlWU0YxQzNtRGdabDRoYUhzams0bnpnSU81c01CZVFCWC9waGwK",
+      "endpoints": [
+        "https://github.com/neura-neura/subscreen/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  }
+}

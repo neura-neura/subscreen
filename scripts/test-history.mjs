@@ -1,0 +1,27 @@
+import assert from 'node:assert/strict';
+import {cueHistoryReducer as reduce,initialHistory,moveCueToSlot} from '../src/lib/cueHistory.ts';
+const a={id:'a',startMs:1000,endMs:2000,text:'One'},b={id:'b',startMs:3000,endMs:4000,text:'Two'};
+let state=reduce(initialHistory,{type:'reset',change:[a,b]});
+state=reduce(state,{type:'edit',change:c=>c.filter(x=>x.id!=='a')});assert.deepEqual(state.present,[b]);
+state=reduce(state,{type:'undo'});assert.deepEqual(state.present,[a,b]);
+state=reduce(state,{type:'redo'});assert.deepEqual(state.present,[b]);
+state=reduce(state,{type:'edit',change:[b,a]});state=reduce(state,{type:'undo'});assert.deepEqual(state.present,[b]);
+state=reduce(state,{type:'redo'});assert.deepEqual(state.present,[b,a]);
+state=reduce(state,{type:'edit',change:[a,b]});state=reduce(state,{type:'undo'});assert.deepEqual(state.present,[b,a]);
+state=reduce(state,{type:'edit',change:[a]});assert.equal(state.future.length,0);
+state=reduce(state,{type:'reset',change:[a,b]});assert.equal(state.past.length,0);
+state=reduce(state,{type:'edit',change:[{...a,text:'O'},b],group:'text:a',at:100});
+state=reduce(state,{type:'edit',change:[{...a,text:'On'},b],group:'text:a',at:200});
+state=reduce(state,{type:'undo'});assert.equal(state.present[0].text,'One');
+console.log('Cue undo/redo, ordering, redo invalidation, reset and text grouping: PASS');
+
+const moved=moveCueToSlot([a,b],'b',-1);
+assert.deepEqual(moved,[{...b,startMs:a.startMs,endMs:a.endMs},{...a,startMs:b.startMs,endMs:b.endMs}]);
+assert.deepEqual(moveCueToSlot(moved,'b',1),[a,b]);
+assert.equal(a.startMs,1000);assert.equal(b.startMs,3000);
+state=reduce(initialHistory,{type:'reset',change:[a,b]});
+state=reduce(state,{type:'edit',change:c=>moveCueToSlot(c,'b',-1)});
+state=reduce(state,{type:'undo'});assert.deepEqual(state.present,[a,b]);
+state=reduce(state,{type:'redo'});assert.deepEqual(state.present,moved);
+assert.strictEqual(moveCueToSlot(moved,'b',-1),moved);
+console.log('Up/down swaps complete time intervals; undo/redo restores both: PASS');

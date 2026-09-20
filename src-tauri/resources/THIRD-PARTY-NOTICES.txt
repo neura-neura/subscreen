@@ -1,0 +1,21 @@
+Subscreen runtime acknowledgments
+
+Noir Player: https://github.com/neura-neura/noir-player
+Player integration adapted from Noir Player. See NOIR-LICENSE.txt.
+
+mpv / libmpv (LGPL build): https://mpv.io/ and https://github.com/mpv-player/mpv
+Build: mpv-dev-lgpl-x86_64-20260807-git-dd5d17d328
+Upstream Windows builds: https://github.com/shinchiro/mpv-winbuild-cmake
+Build recipes and dependency sources: https://github.com/shinchiro/mpv-winbuild-cmake
+
+libmpv-wrapper v0.1.1: https://github.com/nini22P/libmpv-wrapper
+tauri-plugin-libmpv: https://github.com/nini22P/tauri-plugin-libmpv
+
+FFmpeg / FFprobe 8.0.1 full build from https://www.gyan.dev/ffmpeg/builds/
+Source: https://ffmpeg.org/releases/ffmpeg-8.0.1.tar.xz
+Source and build information: https://www.gyan.dev/ffmpeg/builds/#about-these-builds
+See FFMPEG-LICENSE.txt for license terms.
+
+Ollama is downloaded separately from https://ollama.com/download/windows
+Source and license: https://github.com/ollama/ollama
+Model licenses are provided by their respective model publishers.

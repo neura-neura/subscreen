@@ -1,0 +1,122 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+.crop-handle { position:absolute; touch-action:none; }
+.crop-handle-n,.crop-handle-s {left:10px;right:10px;height:14px;cursor:ns-resize;}
+.crop-handle-n {top:-7px;} .crop-handle-s {bottom:-7px;}
+.crop-handle-e,.crop-handle-w {top:10px;bottom:10px;width:14px;cursor:ew-resize;}
+.crop-handle-e {right:-7px;} .crop-handle-w {left:-7px;}
+.crop-handle-nw,.crop-handle-ne,.crop-handle-sw,.crop-handle-se {width:16px;height:16px;background:#fbbf24;border:2px solid #111;border-radius:3px;}
+.crop-handle-nw {left:-6px;top:-6px;cursor:nwse-resize;}
+.crop-handle-ne {right:-6px;top:-6px;cursor:nesw-resize;}
+.crop-handle-sw {left:-6px;bottom:-6px;cursor:nesw-resize;}
+.crop-handle-se {right:-6px;bottom:-6px;cursor:nwse-resize;}
+
+.mpv-active, .mpv-active body, .mpv-active #root, .mpv-active main,
+.mpv-active .player-card, .mpv-active .video-stage { background: transparent !important; }
+.mpv-active #root { position: relative; z-index: 1; }
+.mpv-backdrop { position: fixed; inset: 0; background: #09090b; pointer-events: none; z-index: 0; }
+html[data-theme="light"] .mpv-backdrop { background: #f4f4f5; }
+.player-card > :not(.video-stage) { background: #09090b; }
+html[data-theme="light"] .player-card > :not(.video-stage) { background: white; }
+.video-stage { background: black; }
+.subtitle-preview { margin: 0; font-weight: 400; text-shadow: none; }
+.subtitle-settings input:not([type="checkbox"]), .subtitle-settings select { display: block; width: 100%; margin-top: 6px; }
+.subtitle-settings select, .subtitle-settings input[type="number"], .player-controls select { color: inherit; background: #27272a; border-radius: 4px; padding: 4px; }
+html[data-theme="light"] .subtitle-settings select, html[data-theme="light"] .subtitle-settings input[type="number"], html[data-theme="light"] .player-controls select { background: #e4e4e7; }
+button:focus-visible, input:focus-visible, select:focus-visible, summary:focus-visible { outline: 2px solid #fbbf24; outline-offset: 3px; }
+
+:root {
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #f4f4f5;
+  background: #000;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+* { box-sizing: border-box; }
+
+html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
+
+html[data-theme="light"],
+html[data-theme="light"] body {
+  color: #18181b;
+  background: #f4f4f5;
+}
+
+/* The application intentionally uses a small monochrome token set. These
+   overrides invert that set without touching the video pixels themselves. */
+html[data-theme="light"] .bg-black { background-color: #f4f4f5 !important; }
+html[data-theme="light"] .bg-zinc-950 { background-color: #ffffff !important; }
+html[data-theme="light"] .bg-zinc-900 { background-color: #e4e4e7 !important; }
+html[data-theme="light"] .text-white,
+html[data-theme="light"] .text-zinc-100,
+html[data-theme="light"] .text-zinc-200,
+html[data-theme="light"] .text-zinc-300 { color: #18181b !important; }
+html[data-theme="light"] .text-zinc-400 { color: #52525b !important; }
+html[data-theme="light"] .text-zinc-500,
+html[data-theme="light"] .text-zinc-600 { color: #71717a !important; }
+html[data-theme="light"] [class*="border-white"] { border-color: rgba(24, 24, 27, .18) !important; }
+html[data-theme="light"] [class*="bg-white/"] { background-color: rgba(24, 24, 27, .05) !important; }
+html[data-theme="light"] header { background-color: rgba(255, 255, 255, .92) !important; }
+html[data-theme="light"] select { color: #18181b; }
+html[data-theme="light"] .upload-card {
+  background: #ffffff !important;
+  border-color: rgba(24, 24, 27, .16) !important;
+}
+html[data-theme="light"] .upload-dropzone {
+  color: #18181b;
+  background: radial-gradient(ellipse at center, rgba(24, 24, 27, .08), transparent 62%), #ffffff !important;
+  border-color: rgba(24, 24, 27, .35) !important;
+  box-shadow: inset 0 0 0 1px rgba(24, 24, 27, .03);
+}
+html[data-theme="light"] .upload-dropzone:hover {
+  background: radial-gradient(ellipse at center, rgba(24, 24, 27, .12), transparent 62%), #fafafa !important;
+  border-color: rgba(24, 24, 27, .65) !important;
+}
+
+/* These overlays live over video content, so they intentionally retain high
+   contrast in both application themes. */
+.video-overlay-text {
+  color: #fff !important;
+  background: rgba(0, 0, 0, .96);
+  border: 1px solid rgba(255, 255, 255, .62);
+  box-shadow: 0 4px 22px rgba(0, 0, 0, .82), inset 0 0 0 1px rgba(255, 255, 255, .12);
+  text-shadow: 0 1px 2px #000;
+}
+
+.video-caption {
+  max-width: 88%;
+  padding: .5rem 1rem;
+  color: #fff !important;
+  font-weight: 750;
+  letter-spacing: .01em;
+  background: rgba(0, 0, 0, .92);
+  border: 1px solid rgba(255, 255, 255, .42);
+  border-radius: .5rem;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, .95), 0 0 1px rgba(255, 255, 255, .7);
+  text-shadow: 0 2px 3px #000, 0 0 2px #000;
+}
+
+button, input, textarea { font: inherit; }
+
+button { cursor: pointer; }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, .17); border: 3px solid transparent; border-radius: 999px; background-clip: content-box; }
+::-webkit-scrollbar-thumb:hover { background-color: rgba(148, 163, 184, .32); }
+
+.plyr { height: 100%; --plyr-color-main: #fff; --plyr-video-control-color: #f4f4f5; --plyr-video-control-color-hover: #000; --plyr-video-control-background-hover: #fff; --plyr-range-fill-background: #fff; --plyr-video-progress-buffered-background: rgba(255,255,255,.17); }
+.plyr__video-wrapper, .plyr video { height: 100%; }
+.plyr__video-wrapper { background: #000; }
+.plyr--video .plyr__controls { background: linear-gradient(transparent, rgba(0,0,0,.82)); padding-top: 42px; }
+.plyr__control--overlaid { background: rgba(255,255,255,.9); color: #000; }
+.plyr__control--overlaid:hover { background: #fff; }
+.plyr__menu__container { background: #18181b; color: #f4f4f5; box-shadow: 0 12px 30px rgba(0,0,0,.35); }
+.plyr__menu__container:after { border-top-color: #18181b; }
+.plyr__menu__container .plyr__control[role=menuitemradio]:hover:before { background: #fff; }
+
+html.mpv-active, html.mpv-active body, html.mpv-active #root, html.mpv-active main, html.mpv-active .player-card, html.mpv-active .video-stage { background: transparent !important; }
+html[data-theme].mpv-active main, html[data-theme].mpv-active .player-card, html[data-theme].mpv-active .video-stage { background: transparent !important; }

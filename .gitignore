@@ -1,0 +1,16 @@
+node_modules/
+dist/
+src-tauri/target/
+*.tsbuildinfo
+.DS_Store
+.test-artifacts/
+src-tauri/lib/*.dll
+src-tauri/resources/bin/*.exe
+*.key
+*.key.pub
+.env*
+scripts/configure-030.cjs
+scripts/edit-ui-030.cjs
+scripts/keyboard-check.cjs
+scripts/edit-cues-030.cjs
+src-tauri/gen/

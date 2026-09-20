@@ -25,7 +25,7 @@ const root='C:\\Users\\neura\\repos\\subscreen\\.test-artifacts\\';
  assert.equal(cues[2],'¡Hola! ¿Cómo estás? Mañana será mejor.');
  const progress=await page.evaluate(()=>window.progress);assert(progress.some(n=>n>0&&n<100));
  console.log('OCR + mpv + progress: PASS',cues,progress.length);
- await page.locator('summary').click();
+ await page.getByText('Subtitle appearance & sync',{exact:true}).click();
  const originalDelay=await page.getByLabel('Delay (seconds)').inputValue();
  await page.getByLabel('Delay (seconds)').fill('0.5');
  await page.getByLabel('Delay (seconds)').press('Tab');

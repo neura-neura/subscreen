@@ -1,6 +1,6 @@
 // Native backend and margin mapping follow Noir Player (MIT; see bundled NOIR-LICENSE).
 import { useEffect, useRef, useState, type RefObject } from 'react';
-import { command, init, observeProperties, listenEvents, setProperty, setVideoMarginRatio, type MpvObservableProperty } from 'tauri-plugin-libmpv-api';
+import { command, getProperty, init, observeProperties, listenEvents, setProperty, setVideoMarginRatio, type MpvObservableProperty } from 'tauri-plugin-libmpv-api';
 
 const properties = [['pause','flag'],['time-pos','double','none'],['duration','double','none'],['video-params/w','int64','none'],['video-params/h','int64','none']] as const satisfies readonly MpvObservableProperty[];
 let initialized: Promise<unknown> | undefined;
@@ -53,5 +53,6 @@ export function useMpv(path: string | null, stage: RefObject<HTMLDivElement | nu
     return ()=>{observer.disconnect();window.removeEventListener('resize',schedule);window.removeEventListener('scroll',schedule,true);cancelAnimationFrame(raf);backdrop.remove();document.documentElement.classList.remove('mpv-active');};
   },[path,ready,stage]);
   const run=(promise:Promise<unknown>)=>{void promise.catch(e=>callbacks.current.onError(String(e)));};
-  return {ready,paused,toggle:()=>run(setProperty('pause',!paused)),pause:()=>run(setProperty('pause',true)),seek:(ms:number)=>run(command('seek',[Math.max(0,ms/1000),'absolute','exact'])),volume:(value:number)=>run(setProperty('volume',value)),speed:(value:number)=>run(setProperty('speed',value))};
+  const step=async(direction:number)=>{await setProperty('pause',true);await command(direction<0?'frame-back-step':'frame-step');};
+  return {ready,paused,step,position:async()=>Math.round(Number(await getProperty('time-pos','double'))*1000),fps:async()=>Number(await getProperty('estimated-vf-fps','double'))||24,toggle:()=>run(setProperty('pause',!paused)),pause:()=>run(setProperty('pause',true)),seek:(ms:number)=>run(command('seek',[Math.max(0,ms/1000),'absolute','exact'])),volume:(value:number)=>run(setProperty('volume',value)),speed:(value:number)=>run(setProperty('speed',value))};
 }

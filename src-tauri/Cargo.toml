@@ -1,6 +1,6 @@
 [package]
 name = "subscreen"
-version = "0.3.0"
+version = "0.3.1"
 description = "Desktop studio for extracting burned-in subtitles"
 authors = ["Neura"]
 edition = "2021"

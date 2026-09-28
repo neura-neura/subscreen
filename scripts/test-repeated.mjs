@@ -1,0 +1,13 @@
+import assert from 'node:assert/strict';
+import {repeatedGroups,mergeRepeatedGroup} from '../src/lib/repeatedCues.ts';
+import {cueHistoryReducer,initialHistory} from '../src/lib/cueHistory.ts';
+const cues=Array.from({length:6},(_,i)=>({id:String(i),startMs:587267+i*200,endMs:587467+i*200,text:i%2?'Le enseñaste eso a mi padre?':'¿Le enseñaste eso a mi padre?'}));
+const group=repeatedGroups(cues)[0];assert.equal(group.ids.length,6);
+const merged=mergeRepeatedGroup(cues,group.ids);assert.equal(merged.length,1);assert.equal(merged[0].startMs,cues[0].startMs);assert.equal(merged[0].endMs,cues[5].endMs);assert.equal(merged[0].text,cues[0].text);
+let state=cueHistoryReducer(initialHistory,{type:'reset',change:cues});state=cueHistoryReducer(state,{type:'edit',change:merged});state=cueHistoryReducer(state,{type:'undo'});assert.deepEqual(state.present,cues);state=cueHistoryReducer(state,{type:'redo'});assert.deepEqual(state.present,merged);
+assert.equal(repeatedGroups([{...cues[0],text:'Sí'},{...cues[1],text:'No'}]).length,0);
+assert.equal(repeatedGroups([{...cues[0],text:''},{...cues[1],text:'?'}]).length,0);
+assert.equal(repeatedGroups([cues[0],{...cues[1],startMs:600000,endMs:601000}]).length,0);
+assert.strictEqual(mergeRepeatedGroup(cues,['missing']),cues);
+assert.equal(repeatedGroups([cues[1],cues[0]]).length,0);
+console.log('Consecutive repetitions, punctuation variants, boundaries, preserved text, gap limit and undo/redo: PASS');

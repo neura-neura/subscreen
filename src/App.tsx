@@ -11,6 +11,7 @@ import {openUrl} from '@tauri-apps/plugin-opener';
 import {useCueHistory,moveCueToSlot} from './lib/cueHistory';
 import {
   Check,
+  Pin,
   ArrowUp,
   ArrowDown,
   Undo2,
@@ -124,6 +125,12 @@ export default function App() {
   const [appLocale, setAppLocale] = useState<AppLocale>(initialAppLocale);
 
   const [cueNumber,setCueNumber]=useState('');
+  const [searchStatus,setSearchStatus]=useState('');
+  const searchCursor=useRef({query:'',id:''});
+  const [editorPinned,setEditorPinned]=useState(false);
+  const editorScroll=useRef<HTMLDivElement>(null);
+  const scrollSync=useRef({programmatic:false,userUntil:0,lastId:'',raf:0});
+
   const currentCue = activeCue(cues, currentMs - subtitleStyle.delay * 1000);
   const t = (key: TranslationKey, values?: Record<string, string | number>) => translate(appLocale, key, values);
 
@@ -385,7 +392,28 @@ export default function App() {
       updateCue(id,{[edge]:time});
     }catch(e){setNotice({kind:'error',text:String(e)});}
   }
-  function jumpToCue(){const n=Number(cueNumber);if(!Number.isInteger(n)||n<1||n>cues.length)return;const cue=cues[n-1];player.pause();seekTo(cue.startMs);const row=document.querySelector<HTMLElement>(`[data-cue-id="${cue.id}"]`);row?.scrollIntoView({block:'center'});row?.querySelector('textarea')?.focus({preventScroll:true});}
+  function scrollToCue(id:string){const container=editorScroll.current;const row=container?.querySelector<HTMLElement>(`[data-cue-id="${id}"]`);if(!container||!row)return;scrollSync.current.programmatic=true;container.scrollTop+=row.getBoundingClientRect().top-container.getBoundingClientRect().top-(container.clientHeight-row.clientHeight)/2;}
+  function jumpToCue(){
+    const query=cueNumber.trim().toLocaleLowerCase();if(!query)return;
+    const numeric=/^\d+$/.test(query);
+    const matches=numeric?cues.filter((_,index)=>index===Number(query)-1):cues.filter(cue=>cue.text.toLocaleLowerCase().includes(query));
+    if(!matches.length){setSearchStatus(label('No matches','Sin coincidencias','无匹配'));searchCursor.current={query,id:''};return;}
+    const previous=searchCursor.current.query===query?matches.findIndex(cue=>cue.id===searchCursor.current.id):-1;
+    const index=(previous+1)%matches.length,cue=matches[index];searchCursor.current={query,id:cue.id};
+    setSearchStatus(`${index+1} / ${matches.length}`);player.pause();seekTo(cue.startMs);scrollSync.current.userUntil=0;scrollToCue(cue.id);
+  }
+  function editorScrollIntent(){scrollSync.current.programmatic=false;scrollSync.current.userUntil=performance.now()+600;}
+  function editorScrolled(){
+    const sync=scrollSync.current;if(!editorPinned||!player.ready||sync.programmatic)return;
+    sync.userUntil=performance.now()+600;cancelAnimationFrame(sync.raf);
+    sync.raf=requestAnimationFrame(()=>{const container=editorScroll.current;if(!container)return;const center=container.getBoundingClientRect().top+container.clientHeight/2;
+      const rows=Array.from(container.querySelectorAll<HTMLElement>('[data-cue-id]'));const row=rows.reduce<HTMLElement|null>((best,row)=>!best||Math.abs(row.getBoundingClientRect().top+row.clientHeight/2-center)<Math.abs(best.getBoundingClientRect().top+best.clientHeight/2-center)?row:best,null);
+      const cue=cues.find(cue=>cue.id===row?.dataset.cueId);if(cue&&sync.lastId!==cue.id){sync.lastId=cue.id;player.pause();seekTo(cue.startMs);}
+    });
+  }
+  useEffect(()=>{if(editorPinned&&currentCue&&performance.now()>scrollSync.current.userUntil){scrollSync.current.lastId=currentCue.id;scrollToCue(currentCue.id);}},[editorPinned,currentCue?.id]);
+  useEffect(()=>()=>cancelAnimationFrame(scrollSync.current.raf),[]);
+
   function seekTo(timeMs: number) { player.seek(timeMs + subtitleStyle.delay * 1000); }
 
   function updateCue(id: string, patch: Partial<SubtitleCue>) {
@@ -542,11 +570,11 @@ export default function App() {
           <Card className="xl:hidden"><CardHeader className="pb-3"><CardTitle>{t('actions')}</CardTitle></CardHeader><CardContent className="flex gap-2"><Button onClick={() => void chooseSubtitle()} disabled={busy} variant="secondary" size="sm"><FileText size={14} /> {t('import')}</Button><Button onClick={() => void exportSrt()} disabled={!cues.length} variant="outline" size="sm"><Download size={14} /> SRT</Button></CardContent></Card>
         </section>
 
-        <section className="min-w-0 xl:sticky xl:top-[84px] xl:h-[calc(100vh-105px)]">
+        <section className="min-w-0 xl:sticky xl:top-[84px] h-[calc(100vh-105px)]">
           <Card className="flex h-full min-h-[530px] flex-col overflow-hidden">
             <CardHeader className="flex-row items-center justify-between border-b border-white/[.07] pb-4"><div><CardTitle className="flex items-center gap-2"><FileText className="text-white" size={16} /> {t('editor')}</CardTitle><CardDescription className="mt-1">{cues.length ? t('previewActive', { count: cues.length }) : t('cuesWillAppear')}</CardDescription></div><div className="flex items-center gap-1"><Button onClick={undo} disabled={busy||!canUndo} variant="ghost" size="icon" title={label('Undo (Ctrl+Z)','Deshacer (Ctrl+Z)','撤销 (Ctrl+Z)')}><Undo2 size={16}/></Button><Button onClick={redo} disabled={busy||!canRedo} variant="ghost" size="icon" title={label('Redo (Ctrl+Y)','Rehacer (Ctrl+Y)','重做 (Ctrl+Y)')}><Redo2 size={16}/></Button><Button onClick={addCue} disabled={!videoPath||busy} variant="ghost" size="icon" title={t('addSubtitle')}><Plus size={18} /></Button></div></CardHeader>
-            <form className="flex items-center gap-2 border-b border-white/10 p-3" onSubmit={e=>{e.preventDefault();jumpToCue();}}><label className="text-xs">{label('Go to cue','Ir al cue','跳转字幕')} <input aria-label={label('Cue number','Número de cue','字幕序号')} type="number" min="1" max={cues.length||1} step="1" required value={cueNumber} onChange={e=>setCueNumber(e.target.value)} className="ml-2 w-20 rounded bg-white/10 p-2"/></label><Button type="submit" size="sm" variant="secondary" disabled={!cues.length||!player.ready}>{label('Go','Ir','跳转')}</Button></form>
-            {cues.length ? <div className="min-h-0 flex-1 overflow-y-auto p-3 pr-2"><div className="space-y-2">{sortedCues.map((cue, index) => <CueEditor key={cue.id} cue={cue} number={index + 1} active={currentCue?.id === cue.id} locale={appLocale} onMoveUp={index>0?()=>moveCue(cue.id,-1):undefined} onMoveDown={index<cues.length-1?()=>moveCue(cue.id,1):undefined} onStampStart={()=>void stampCue(cue.id,'startMs')} onStampEnd={()=>void stampCue(cue.id,'endMs')} onSeek={() => seekTo(cue.startMs)} onDelete={() => removeCue(cue.id)} onText={(text) => updateCue(cue.id, { text })} onStart={(value) => { const time = parseEditableTime(value); if (time !== null && time < cue.endMs) updateCue(cue.id, { startMs: time }); }} onEnd={(value) => { const time = parseEditableTime(value); if (time !== null && time > cue.startMs) updateCue(cue.id, { endMs: time }); }} />)}</div></div> : <EmptyEditor onImport={() => void chooseSubtitle()} onAdd={addCue} locale={appLocale} />}
+            <form className="flex flex-wrap items-center gap-2 border-b border-white/10 p-3" onSubmit={e=>{e.preventDefault();jumpToCue();}}><label className="min-w-0 flex-1 text-xs">{label('Find cue or text','Buscar cue o texto','查找字幕或文本')}<input aria-label={label('Cue number or subtitle text','Número de cue o texto del subtítulo','字幕序号或文本')} type="search" required value={cueNumber} onChange={e=>{setCueNumber(e.target.value);searchCursor.current={query:'',id:''};setSearchStatus('');}} placeholder={label('Number or text…','Número o texto…','序号或文本…')} className="mt-1 w-full rounded bg-white/10 p-2"/></label><Button type="submit" size="sm" variant="secondary" disabled={!cues.length||!player.ready}>{label('Find next','Buscar siguiente','下一个')}</Button><Button type="button" size="icon" variant={editorPinned?'default':'ghost'} aria-pressed={editorPinned} title={label('Sync editor and video','Anclar editor al video','同步编辑器和视频')} onClick={()=>{scrollSync.current.userUntil=0;scrollSync.current.lastId='';setEditorPinned(value=>!value);}}><Pin size={16}/></Button><span className="w-full text-xs text-zinc-400" role="status">{searchStatus}</span></form>
+            {cues.length ? <div ref={editorScroll} data-testid="cue-scroll" tabIndex={0} onWheel={editorScrollIntent} onTouchStart={editorScrollIntent} onPointerDown={editorScrollIntent} onKeyDown={e=>{if(['ArrowDown','ArrowUp','PageDown','PageUp','Home','End'].includes(e.key))editorScrollIntent();}} onScroll={editorScrolled} className="min-h-0 flex-1 overflow-y-auto p-3 pr-2"><div className="space-y-2">{sortedCues.map((cue, index) => <CueEditor key={cue.id} cue={cue} number={index + 1} active={currentCue?.id === cue.id} locale={appLocale} onMoveUp={index>0?()=>moveCue(cue.id,-1):undefined} onMoveDown={index<cues.length-1?()=>moveCue(cue.id,1):undefined} onStampStart={()=>void stampCue(cue.id,'startMs')} onStampEnd={()=>void stampCue(cue.id,'endMs')} onSeek={() => seekTo(cue.startMs)} onDelete={() => removeCue(cue.id)} onText={(text) => updateCue(cue.id, { text })} onStart={(value) => { const time = parseEditableTime(value); if (time !== null && time < cue.endMs) updateCue(cue.id, { startMs: time }); }} onEnd={(value) => { const time = parseEditableTime(value); if (time !== null && time > cue.startMs) updateCue(cue.id, { endMs: time }); }} />)}</div></div> : <EmptyEditor onImport={() => void chooseSubtitle()} onAdd={addCue} locale={appLocale} />}
             <div className="border-t border-white/[.07] bg-white/[.02] p-3"><Button onClick={() => void exportSrt()} disabled={!cues.length} className="w-full"><Download size={15} /> {t('exportFile')}</Button><Button onClick={() => void burnSubtitles()} disabled={!cues.length || busy} variant="ghost" className="mt-1 w-full text-zinc-400 hover:text-white">{isBurning ? <LoaderCircle className="animate-spin" size={15} /> : <Film size={15} />} {t('embedVideo')}</Button></div>
           </Card>
         </section>

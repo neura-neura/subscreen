@@ -132,7 +132,21 @@ export default function App() {
   const repeatPosition=Math.min(repeatIndex,Math.max(0,repeats.length-1));
   const repeatGroup=repeats[repeatPosition];
   function reviewRepeat(index:number){const next=(index+repeats.length)%repeats.length;if(!repeats[next])return;setRepeatIndex(next);navigateToCue(cues[repeats[next].first]);}
-  function mergeRepeat(){if(busy||!repeatGroup)return;const first=cues[repeatGroup.first];editCues(current=>mergeRepeatedGroup(current,repeatGroup.ids,repeatGap));setRepeatIndex(repeatPosition);navigateToCue(first);}
+  const mergedReviewTarget=useRef<string|null>(null);
+  function mergeRepeat(){
+    if(busy||!repeatGroup)return;
+    const updated=mergeRepeatedGroup(cues,repeatGroup.ids,repeatGap);
+    if(updated===cues)return;
+    const remaining=repeatedGroups(updated,repeatGap);
+    const nextPosition=Math.min(repeatPosition,Math.max(0,remaining.length-1));
+    mergedReviewTarget.current=remaining[nextPosition]?updated[remaining[nextPosition].first].id:repeatGroup.ids[0];
+    setRepeatIndex(nextPosition);editCues(updated);
+  }
+  useEffect(()=>{
+    const id=mergedReviewTarget.current;if(!id)return;
+    mergedReviewTarget.current=null;
+    const cue=cues.find(cue=>cue.id===id);if(cue)navigateToCue(cue);
+  },[cues]);
   const [cueNumber,setCueNumber]=useState('');
   const [searchStatus,setSearchStatus]=useState('');
   const searchCursor=useRef({query:'',id:''});
